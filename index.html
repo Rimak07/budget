@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mon budget</title>
+  <style>
+    [hidden] { display: none !important; }
+    body {
+      font-family: -apple-system, Helvetica, Arial, sans-serif;
+      background: #1e1f2b;
+      color: #e8e8f0;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    label { display: block; margin-top: 12px; color: #9a9db5; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 8px;
+      background: #2a2c3d;
+      color: #e8e8f0;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #6c8cff;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .barre { display: flex; align-items: center; gap: 8px; }
+    #nomBudget { flex: 1; font-size: 18px; font-weight: bold; color: #8aa4ff; }
+    .petit { width: auto; margin-top: 0; padding: 8px 12px; font-size: 14px; }
+    #menuProjets button { margin-top: 6px; background: #2a2c3d; text-align: left; }
+    li { margin: 8px 0; }
+    #total, #reste { font-size: 20px; font-weight: bold; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Mon budget</h1>
+
+  <div class="barre">
+    <span id="nomBudget"></span>
+    <button id="boutonProjets" class="petit" onclick="basculerMenu()">Projets</button>
+    <button class="petit" onclick="nouveauBudget()">+ Nouveau</button>
+  </div>
+  <div id="menuProjets" hidden></div>
+
+  <label>Revenu du mois ($)</label>
+  <input id="revenu" inputmode="decimal">
+
+  <label>Description</label>
+  <input id="description">
+
+  <label>Montant ($)</label>
+  <input id="montant" inputmode="decimal">
+
+  <label>Catégorie (facultatif)</label>
+  <input id="categorie">
+
+  <button onclick="ajouter()">Ajouter la dépense</button>
+
+  <ul id="liste"></ul>
+  <div id="total"></div>
+  <div id="reste"></div>
+
+  <script>
+    const CLE = "mon-budget-donnees";
+    let donnees = { budgetActuel: null, budgets: {} };
+
+    // ---------- Sauvegarde et chargement ----------
+    function sauvegarder() {
+      try {
+        localStorage.setItem(CLE, JSON.stringify(donnees));
+      } catch (e) {
+        console.error("Sauvegarde impossible", e);
+      }
+    }
+
+    function moisCourant() {
+      const maintenant = new Date();
+      const mois = String(maintenant.getMonth() + 1).padStart(2, "0");
+      return `${maintenant.getFullYear()}-${mois}`;
+    }
+
+    function charger() {
+      try {
+        const brut = localStorage.getItem(CLE);
+        if (brut) donnees = JSON.parse(brut);
+      } catch (e) {
+        console.error("Lecture impossible", e);
+      }
+
+      const noms = Object.keys(donnees.budgets);
+      if (noms.length === 0) {
+        const nom = moisCourant();
+        donnees = { budgetActuel: nom, budgets: { [nom]: { revenu: "", depenses: [] } } };
+        sauvegarder();
+      } else if (!donnees.budgets[donnees.budgetActuel]) {
+        donnees.budgetActuel = noms[noms.length - 1];
+      }
+    }
+
+    function budgetCourant() {
+      return donnees.budgets[donnees.budgetActuel];
+    }
+
+    // ---------- Nombres ----------
+    function lireNombre(texte) {
+      return parseFloat(texte.replace(/\s/g, "").replace(",", "."));
+    }
+
+    // ---------- Actions ----------
+    function ajouter() {
+      const description = document.getElementById("description").value.trim();
+      const montant = lireNombre(document.getElementById("montant").value);
+      let categorie = document.getElementById("categorie").value.trim().toLowerCase();
+      if (categorie === "") categorie = "sans catégorie";
+
+      if (description === "" || isNaN(montant)) {
+        alert("Remplis la description et un montant valide.");
+        return;
+      }
+
+      budgetCourant().depenses.push({ description: description, montant: montant, categorie: categorie });
+      sauvegarder();
+
+      document.getElementById("description").value = "";
+      document.getElementById("montant").value = "";
+      document.getElementById("categorie").value = "";
+      afficher();
+    }
+
+    function nouveauBudget() {
+      const saisie = prompt("Nom du budget (ex : 2026-11 ou Voyage Europe) :");
+      if (saisie === null) return;
+      const nom = saisie.trim();
+      if (nom === "") {
+        alert("Le nom ne peut pas être vide.");
+        return;
+      }
+      if (donnees.budgets[nom]) {
+        alert("Ce budget existe déjà.");
+        return;
+      }
+      donnees.budgets[nom] = { revenu: "", depenses: [] };
+      changerBudget(nom);
+    }
+
+    function changerBudget(nom) {
+      donnees.budgetActuel = nom;
+      sauvegarder();
+      document.getElementById("menuProjets").hidden = true;
+      document.getElementById("revenu").value = budgetCourant().revenu;
+      afficher();
+    }
+
+    function basculerMenu() {
+      const menu = document.getElementById("menuProjets");
+      menu.innerHTML = "";
+      for (const nom of Object.keys(donnees.budgets)) {
+        const bouton = document.createElement("button");
+        bouton.textContent = nom === donnees.budgetActuel ? `✓ ${nom}` : nom;
+        bouton.onclick = () => changerBudget(nom);
+        menu.appendChild(bouton);
+      }
+      menu.hidden = !menu.hidden;
+    }
+
+    // ---------- Affichage ----------
+    function afficher() {
+      const b = budgetCourant();
+      document.getElementById("nomBudget").textContent = donnees.budgetActuel;
+      // Le bouton Projets n'apparaît que s'il y a plus d'un budget
+      document.getElementById("boutonProjets").hidden = Object.keys(donnees.budgets).length <= 1;
+
+      const liste = document.getElementById("liste");
+      liste.innerHTML = "";
+      let total = 0;
+
+      for (const d of b.depenses) {
+        total += d.montant;
+        const li = document.createElement("li");
+        li.textContent = `${d.description} (${d.categorie}) : ${d.montant.toFixed(2)} $`;
+        liste.appendChild(li);
+      }
+
+      const revenu = lireNombre(b.revenu || "") || 0;
+      document.getElementById("total").textContent = `Dépenses : ${total.toFixed(2)} $`;
+      document.getElementById("reste").textContent = `Il reste : ${(revenu - total).toFixed(2)} $`;
+    }
+
+    document.getElementById("revenu").addEventListener("input", function () {
+      budgetCourant().revenu = document.getElementById("revenu").value;
+      sauvegarder();
+      afficher();
+    });
+
+    // ---------- Démarrage ----------
+    charger();
+    document.getElementById("revenu").value = budgetCourant().revenu;
+    afficher();
+  </script>
+</body>
+</html>
