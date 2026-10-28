@@ -50,6 +50,7 @@
 
   <div class="barre">
     <span id="nomBudget"></span>
+    <button class="petit" onclick="renommerBudget()">✎</button>
     <button id="boutonProjets" class="petit" onclick="basculerMenu()">Projets</button>
     <button class="petit" onclick="nouveauBudget()">+ Nouveau</button>
   </div>
@@ -156,6 +157,30 @@
       changerBudget(nom);
     }
 
+    function renommerBudget() {
+      const ancien = donnees.budgetActuel;
+      const saisie = prompt("Nouveau nom pour ce budget :", ancien);
+      if (saisie === null) return;
+      const nouveau = saisie.trim();
+      if (nouveau === "" || nouveau === ancien) return;
+      if (donnees.budgets[nouveau]) {
+        alert("Un budget porte déjà ce nom.");
+        return;
+      }
+
+      // On reconstruit la liste pour garder le budget à la même place
+      const nouveauxBudgets = {};
+      for (const nom of Object.keys(donnees.budgets)) {
+        nouveauxBudgets[nom === ancien ? nouveau : nom] = donnees.budgets[nom];
+      }
+      donnees.budgets = nouveauxBudgets;
+      donnees.budgetActuel = nouveau;
+
+      sauvegarder();
+      document.getElementById("menuProjets").hidden = true;
+      afficher();
+    }
+
     function changerBudget(nom) {
       donnees.budgetActuel = nom;
       sauvegarder();
@@ -188,27 +213,3 @@
       let total = 0;
 
       for (const d of b.depenses) {
-        total += d.montant;
-        const li = document.createElement("li");
-        li.textContent = `${d.description} (${d.categorie}) : ${d.montant.toFixed(2)} $`;
-        liste.appendChild(li);
-      }
-
-      const revenu = lireNombre(b.revenu || "") || 0;
-      document.getElementById("total").textContent = `Dépenses : ${total.toFixed(2)} $`;
-      document.getElementById("reste").textContent = `Il reste : ${(revenu - total).toFixed(2)} $`;
-    }
-
-    document.getElementById("revenu").addEventListener("input", function () {
-      budgetCourant().revenu = document.getElementById("revenu").value;
-      sauvegarder();
-      afficher();
-    });
-
-    // ---------- Démarrage ----------
-    charger();
-    document.getElementById("revenu").value = budgetCourant().revenu;
-    afficher();
-  </script>
-</body>
-</html>
