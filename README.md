@@ -1,0 +1,5 @@
+This is a simple but effective **budget calculator** for your projects. You can use it either as a regular website or turn it into an app by using “Share” in Safari and choosing “Add to Home Screen.” Once added, it will appear on your iPhone like any other app, giving you quick access whenever you need to plan or track a budget. For now, it’s only available on iPhone, but it’s already a very handy tool for organizing project costs and keeping your finances under control. 📱💸
+
+---
+
+C’est un **calculateur de budget** simple mais efficace pour tes projets. Tu peux l’utiliser comme un site web classique ou le transformer en application en allant dans “Partager” dans Safari puis en choisissant “Ajouter à l’écran d’accueil”. Une fois ajouté, il apparaîtra sur ton iPhone comme une appli normale, ce qui te permet d’y accéder rapidement dès que tu as besoin de planifier ou suivre un budget. Pour l’instant, il est uniquement disponible sur iPhone, mais c’est déjà un outil très pratique pour organiser les coûts de tes projets et garder le contrôle de tes finances. 📱💸
